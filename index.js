@@ -2,8 +2,8 @@ import { io } from "socket.io-client";
 import chalk from "chalk";
 
 function devLog(...args) {
-	if (process.env.ENV === "production") return;
-	console.log(chalk.bold(...args))
+	if (process.env.ENV === "dev") console.log(chalk.bold(...args));
+	else return
 }
 
 function errorLog(...args) {
@@ -51,10 +51,17 @@ export class Ignition {
 	}
 
 	async on(eventName, callback) {
-		if (this.#groupId == undefined) {
+		if (eventName != "connect" && eventName != "disconnect" && this.#groupId == undefined) {
 			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		};
 		this.#socket.on(eventName, callback);
+	}
+
+	async off(eventName, callback=undefined) {
+		if (eventName != "connect" && eventName != "disconnect" && this.#groupId == undefined) {
+			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
+		};
+		this.#socket.off(eventName, callback);
 	}
 
 	// this method adds the message to the `message queue` from which shared websocket server 
@@ -88,7 +95,14 @@ export class Ignition {
 
 
 
-// let s2 = new Ignition("abc123");
+let s2 = new Ignition("abc123");
+s2.on("connect", () => {
+	console.log("s2 client connected");
+	s2.subscribe("emails");
+	s2.on("message", (data) => {
+		console.log("s2 client got message for event `message`: ", data);
+	})
+})
 // s2.subscribe("radha");
 // s2.on("news", (data) => {
 // 	console.log("s2 client got message for event `news`: ", data);

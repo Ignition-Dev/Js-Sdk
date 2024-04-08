@@ -11,6 +11,7 @@ declare class Ignition {
   subscribe(groupId: string): Promise<void>;
   emit(eventName: string, groupId: string, message: any): Promise<void>;
   on(eventName: string, callback: (data: any) => void): Promise<void>;
+  off(eventName: string, callback?: (data: any) => void): Promise<void>;
   publish(groupId: string, eventName: string, message: any): Promise<void>;
 }
 
