@@ -11,15 +11,14 @@ function errorLog(...args) {
 }
 
 export class Ignition {
-	#apiKey; #socket; #state; #groupId; #url;
+	#socket;
 	constructor(key, url = undefined) {
-		this.#url = url;
-		this.#apiKey = key;
-		this.#groupId = undefined;
-		this.#state = true;
+		this.url = url;
+		this.apiKey = key;
+		this.groupId = undefined;
 		this.#socket = io(url ?? "ws://52.66.244.200:3000", { // public shared ignition websocket server URL - Elastic Ip
 			auth: {
-				token: this.#apiKey,
+				token: this.apiKey,
 			}
 		});
 		this.#socket.on("ERROR", (message) => { errorLog(message) });
@@ -27,38 +26,53 @@ export class Ignition {
 	}
 
 	async subscribe(groupId) {
-		this.#groupId = groupId; // set groupId as global class state
+		this.groupId = groupId; // set groupId as global class state
 		devLog("Attempting to subscribe to room !!");
-		this.#socket.emit("JOIN", `${this.#apiKey}_${groupId}`, (data) => {
+		this.#socket.emit("JOIN", `${this.apiKey}_${groupId}`, (data) => {
 			console.log(chalk.cyanBright(data));
-			this.#state = true;
 		});
 		this.#socket.emit("message", groupId);
+	}
+
+	async unsubscribe(groupId) {
+		this.groupId = groupId; // set groupId as global class state
+		devLog("Attempting to unsubscribe from room !!");
+		this.#socket.emit("LEAVE", `${this.apiKey}_${groupId}`, (data) => {
+			console.log(chalk.cyanBright(data));
+		});
 	}
 
 	// this method should only be used by dedictaed, dedictaed+ & enterprize clients
 	// emit directly send message to the websocket server instaed appending it to the message queue.
 	async emit(eventName, groupId, message) {
-		if (this.#url == undefined) {
+		if (this.url == undefined) {
 			errorLog("You must have `URL` of a server to emit a direct message, try using `publish()` method for Shared users.")
 		}
 		devLog("EMITTING EVENT !!")
 		this.#socket.emit("MESSAGE", {
 			event: eventName,
-			room: this.#apiKey + "_" + groupId,
+			room: this.apiKey + "_" + groupId,
 			message: message,
 		})
 	}
 
+	async ecryptedEmit() {
+
+	}
+
+	async ecryptedPublish() {
+
+	}
+
 	async on(eventName, callback) {
-		if (eventName != "connect" && eventName != "disconnect" && this.#groupId == undefined) {
+		if (eventName != "connect" && eventName != "disconnect" && this.groupId == undefined) {
 			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		};
 		this.#socket.on(eventName, callback);
 	}
 
 	async off(eventName, callback=undefined) {
-		if (eventName != "connect" && eventName != "disconnect" && this.#groupId == undefined) {
+		if (eventName != "connect" && eventName != "disconnect" && this.groupId == undefined) {
 			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		};
 		this.#socket.off(eventName, callback);
@@ -80,7 +94,7 @@ export class Ignition {
 					"group_id": groupId,
 					"event_name": eventName,
 					"message": message,
-					"key": this.#apiKey
+					"key": this.apiKey
 				})
 			})
 			if (res.status != 200) {
@@ -95,14 +109,14 @@ export class Ignition {
 
 
 
-let s2 = new Ignition("abc123");
-s2.on("connect", () => {
-	console.log("s2 client connected");
-	s2.subscribe("emails");
-	s2.on("message", (data) => {
-		console.log("s2 client got message for event `message`: ", data);
-	})
-})
+// let s2 = new Ignition("abc123");
+// s2.on("connect", () => {
+// 	console.log("s2 client connected");
+// 	s2.subscribe("emails");
+// 	s2.on("message", (data) => {
+// 		console.log("s2 client got message for event `message`: ", data);
+// 	})
+// })
 // s2.subscribe("radha");
 // s2.on("news", (data) => {
 // 	console.log("s2 client got message for event `news`: ", data);
