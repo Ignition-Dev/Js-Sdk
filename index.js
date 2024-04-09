@@ -1,5 +1,7 @@
 import { io } from "socket.io-client";
 import chalk from "chalk";
+import CryptoJS from 'crypto-js';
+const { AES } = CryptoJS;
 
 function devLog(...args) {
 	if (process.env.ENV === "dev") console.log(chalk.bold(...args));
@@ -11,18 +13,27 @@ function errorLog(...args) {
 }
 
 export class Ignition {
-	#socket;
-	constructor(key, url = undefined) {
-		this.url = url;
-		this.apiKey = key;
+	#socket;#encryptionKey;
+	constructor(config) {
+		this.url = config.url;
+		this.#encryptionKey = config.encryptionKey;
+		this.apiKey = config.key;
 		this.groupId = undefined;
-		this.#socket = io(url ?? "ws://52.66.244.200:3000", { // public shared ignition websocket server URL - Elastic Ip
+		this.#socket = io(this.url ?? "ws://52.66.244.200:3000", { // public shared ignition websocket server URL - Elastic Ip
 			auth: {
 				token: this.apiKey,
 			}
 		});
 		this.#socket.on("ERROR", (message) => { errorLog(message) });
 		this.#socket.on("CONNECTED", (message) => { devLog(chalk.cyanBright(message)) });
+	}
+
+	ecrypt(message) {
+		return AES.encrypt(message, this.#encryptionKey).toString();
+	}
+
+	decrypt(message) {
+		return AES.decrypt(message, this.#encryptionKey).toString(CryptoJS.enc.Utf8);
 	}
 
 	async subscribe(groupId) {
@@ -48,20 +59,17 @@ export class Ignition {
 		if (this.url == undefined) {
 			errorLog("You must have `URL` of a server to emit a direct message, try using `publish()` method for Shared users.")
 		}
+
+		if(typeof(message) == "object") {
+			message = JSON.stringify(message)
+		}
+
 		devLog("EMITTING EVENT !!")
 		this.#socket.emit("MESSAGE", {
 			event: eventName,
 			room: this.apiKey + "_" + groupId,
-			message: message,
+			message: this.#encryptionKey ? this.ecrypt(message) : message,
 		})
-	}
-
-	async ecryptedEmit() {
-
-	}
-
-	async ecryptedPublish() {
-
 	}
 
 	async on(eventName, callback) {
@@ -93,7 +101,7 @@ export class Ignition {
 				body: JSON.stringify({
 					"group_id": groupId,
 					"event_name": eventName,
-					"message": message,
+					"message": this.#encryptionKey ? this.ecrypt(message) : message,
 					"key": this.apiKey
 				})
 			})
@@ -107,8 +115,13 @@ export class Ignition {
 
 }
 
-
-
+// let real = new Ignition("abc123", {
+// 	// url: "XXXXXXXXXXXXXXXXXXXXXXXXX",
+// 	encryptionKey: "12wwsxf"
+// });
+// real.on("con", (data) => {
+// 	console.log(real.decrypt(data))
+// })
 // let s2 = new Ignition("abc123");
 // s2.on("connect", () => {
 // 	console.log("s2 client connected");
@@ -123,31 +136,3 @@ export class Ignition {
 // })
 // let spark1 = new Ignition("abc123");
 // spark1.emit("news", "radha", "hello world");
-
-// let t = {
-// 	"group_id": "emails",
-// 	"event_name": "message",
-// 	"message": "RADHA KRISHN",
-// 	"key": "RadhaKrishna"
-// }
-// try {
-// 	const res = await fetch("http://127.0.0.1:3000/ignite", {
-// 		method: "POST",
-// 		mode: "cors", // no-cors, *cors, same-origin
-// 		cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-
-// 		credentials: "same-origin", // include, *same-origin, omit
-// 		headers: {
-// 			"Content-Type": "application/json",
-// 			// 'Content-Type': 'application/x-www-form-urlencoded',
-// 		},
-// 		body: JSON.stringify(t)
-// 	})
-// 	if (res.status != 200) {
-// 		throw Error(`Failed to publish message, status code: ${res.status}, message: ${res.message}`)
-// 	}
-// 	else {
-// 		console.log(await res.json())
-// 	}
-// } catch (error) {
-// 	errorLog(error)
-// }
