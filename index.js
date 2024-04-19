@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 import chalk from "chalk";
 import CryptoJS from 'crypto-js';
+
 const { AES } = CryptoJS;
 
 function devLog(...args) {
@@ -19,6 +20,7 @@ export class Ignition {
 		this.#encryptionKey = config.encryptionKey;
 		this.apiKey = config.key;
 		this.groupId = undefined;
+		this.groupCount = 0;
 		this.#socket = io(this.url ?? "ws://52.66.244.200:3000", { // public shared ignition websocket server URL - Elastic Ip
 			auth: {
 				token: this.apiKey,
@@ -37,12 +39,12 @@ export class Ignition {
 	}
 
 	async subscribe(groupId) {
-		this.groupId = groupId; // set groupId as global class state
+		this.groupId = groupId;
 		devLog("Attempting to subscribe to room !!");
-		this.#socket.emit("JOIN", `${this.apiKey}_${groupId}`, (data) => {
+		this.#socket.emit("JOIN", `${this.apiKey}_${groupId}`, (data) => { // this would be recived by the server & the server will join this client int that room
 			console.log(chalk.cyanBright(data));
 		});
-		this.#socket.emit("message", groupId);
+		this.#socket.emit("GROUP", groupId);
 	}
 
 	async unsubscribe(groupId) {
@@ -53,8 +55,6 @@ export class Ignition {
 		});
 	}
 
-	// this method should only be used by dedictaed, dedictaed+ & enterprize clients
-	// emit directly send message to the websocket server instaed appending it to the message queue.
 	async emit(eventName, groupId, message) {
 		if (this.url == undefined) {
 			errorLog("You must have `URL` of a server to emit a direct message, try using `publish()` method for Shared users.")
