@@ -41,10 +41,10 @@ export class Ignition {
 	async subscribe(groupId) {
 		this.groupId = groupId;
 		devLog("Attempting to subscribe to room !!");
-		this.#socket.emit("JOIN", `${this.apiKey}_${groupId}`, (data) => { // this would be recived by the server & the server will join this client int that room
+		this.#socket.emit("JOIN", { key: this.apiKey, group_id: this.groupId }, (data) => { // this would be recived by the server & the server will join this client int that room
 			console.log(chalk.cyanBright(data));
 		});
-		this.#socket.emit("GROUP", groupId);
+		// this.#socket.emit("GROUP", groupId);
 	}
 
 	async unsubscribe(groupId) {
@@ -66,9 +66,10 @@ export class Ignition {
 
 		devLog("EMITTING EVENT !!")
 		this.#socket.emit("MESSAGE", {
-			event: eventName,
-			room: this.apiKey + "_" + groupId,
+			group_id: this.apiKey + "_" + groupId,
+			event_name: eventName,
 			message: this.#encryptionKey ? this.ecrypt(message) : message,
+			key: this.apiKey
 		})
 	}
 
