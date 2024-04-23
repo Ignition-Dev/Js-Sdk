@@ -14,7 +14,7 @@ function errorLog(...args) {
 }
 
 export class Ignition {
-	#socket;#encryptionKey;
+	#socket; #encryptionKey;
 	constructor(config) {
 		this.url = config.url;
 		this.#encryptionKey = config.encryptionKey;
@@ -27,7 +27,7 @@ export class Ignition {
 			}
 		});
 		this.#socket.on("ERROR", (message) => { errorLog(message) });
-		this.#socket.on("CONNECTED", (message) => { devLog(chalk.cyanBright(message)) });
+		// this.#socket.on("CONNECTED", (message) => { devLog(chalk.cyanBright(message)) });
 	}
 
 	ecrypt(message) {
@@ -60,17 +60,22 @@ export class Ignition {
 			errorLog("You must have `URL` of a server to emit a direct message, try using `publish()` method for Shared users.")
 		}
 
-		if(typeof(message) == "object") {
+		if (typeof (message) == "object") {
 			message = JSON.stringify(message)
 		}
 
 		devLog("EMITTING EVENT !!")
-		this.#socket.emit("MESSAGE", {
+
+		let mes = {
 			group_id: this.apiKey + "_" + groupId,
 			event_name: eventName,
 			message: this.#encryptionKey ? this.ecrypt(message) : message,
 			key: this.apiKey
-		})
+		}
+
+		console.log("MESSAGE TO BE SENT TO THE SREVRE: -> ", mes);
+
+		this.#socket.emit("MESSAGE", mes)
 	}
 
 	async on(eventName, callback) {
@@ -80,7 +85,7 @@ export class Ignition {
 		this.#socket.on(eventName, callback);
 	}
 
-	async off(eventName, callback=undefined) {
+	async off(eventName, callback = undefined) {
 		if (eventName != "connect" && eventName != "disconnect" && this.groupId == undefined) {
 			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		};
@@ -115,6 +120,30 @@ export class Ignition {
 	}
 
 }
+
+let r = new Ignition({
+	key: "RadhaKrishna",
+	url: "http://localhost:4000/"
+	// url:"https://ignition-shared-v3.onrender.com/" 
+});
+
+r.on("CONNECTED", (MES) => {
+	console.log(MES)
+})
+
+r.subscribe("test")
+
+r.on("sync", (data) => {
+	console.log(data)
+})
+
+let s = new Ignition({
+	key: "abc123",
+	url: "http://localhost:4000/"
+	// url:"https://ignition-shared-v3.onrender.com/" 
+});
+
+s.emit("sync", "radha", "hello world")
 
 // let real = new Ignition("abc123", {
 // 	// url: "XXXXXXXXXXXXXXXXXXXXXXXXX",
