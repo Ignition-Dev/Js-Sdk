@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
-
+import { Ignition } from "./Ignition"
+// import { io } from "socket.io-client";
+// import { Ignition } from "ignition-js-sdk";
 
 export default function Home() {
 
@@ -11,50 +12,55 @@ export default function Home() {
 
 	useEffect(() => {
 
-		const socket = io("https://ignition-shared-v3.onrender.com", {
-			auth:{
-				token:"abc123"
-			}
-		});
+		// const con = io("https://ignition-shared-v3.onrender.com", {
+		// 	auth:{
+		// 		token:"abc123"
+		// 	}
+		// });
 
-		setSocket(socket);
+		const con = new Ignition({
+			key:"abc123",
+			url:"https://ignition-shared-v3.onrender.com"
+		})
 
-		socket.on("connect", () => {
+		setSocket(con);
+
+		con.on("connect", () => {
 			console.log("connected");
-			socket.emit("JOIN", { key:"abc123", group_id:"test" }, (data:any) => {
-				console.log(data)
+			// con.emit("JOIN", { key:"abc123", group_id:"test" }, (data:any) => {
+			// 	console.log(data)
+			// })
+			con.subscribe("test")
+			con.on("sync", (data:any) => {
+				console.log("DATA:", data)
+				setSyncState(data)
 			})
-			socket.on("sync", (data:any) => {
-				// alert(data)
-				console.log(data)
-				setTempState(data)
-			})
+			// con.emit("sync", "test", "test")
 		})
 
 	}, []);
 
-	useEffect(() => {
-		if(socket){
-			console.log("emitting")
-			socket.emit("MESSAGE", {
-				group_id:"test",
-				event_name:"sync",
-				message: syncState,
-				key:"abc123",
-			})
-		}
-	}, [syncState])
-
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-between p-24">
-			<h1 className="text-5xl font-bold">
+		<main className="flex min-h-screen flex-col items-center justify-between pt-24">
+			<h1 className="text-5xl font-bold my-6 text-center">
 				Welcome to Ignition!
 			</h1>
 			<textarea 
-				defaultValue={tempState}
-				onChange={(e) => setSyncState(e.target.value)}
+				value={syncState}
+				onChange={(e) => {
+					let temp = e.target.value;
+					setSyncState(_ => temp);
+					// socket.emit("MESSAGE", {
+					// 	group_id:"test",
+					// 	event_name:"sync",
+					// 	message: temp,
+					// 	key:"abc123",
+					// })
+					socket.emit("sync", temp)
+				}}
 				placeholder="Live edit a document with ignition .." 
-				className="p-8 text-xl m-auto w-11/12 h-96 border border-neutral-800 rounded-2xl bg-neutral-900 outline-none"
+				className="p-8 text-xl w-[90%] mx-4 sm:m-auto sm:w-11/12 h-96 border border-neutral-800 rounded-2xl 
+				bg-neutral-900 outline-none"
 			/>
 		</main>
 	);
