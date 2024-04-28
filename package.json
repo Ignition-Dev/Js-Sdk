@@ -1,6 +1,6 @@
 {
   "name": "ignition-js-sdk",
-  "version": "1.0.5-dev",
+  "version": "1.0.7-dev",
   "description": "Javascript SDK to use Ignition Websocket Servers",
   "main": "index.js",
   "author": "Yakshit Chhipa",

@@ -123,27 +123,33 @@ export class Ignition {
 
 let r = new Ignition({
 	key: "RadhaKrishna",
-	url: "http://localhost:4000/"
-	// url:"https://ignition-shared-v3.onrender.com/" 
+	// url: "http://localhost:4000/"
+	url:"https://ignition-shared-v3.onrender.com/" 
 });
-
-r.on("CONNECTED", (MES) => {
-	console.log(MES)
-})
-
-r.subscribe("test")
-
-r.on("sync", (data) => {
-	console.log(data)
-})
 
 let s = new Ignition({
 	key: "abc123",
-	url: "http://localhost:4000/"
-	// url:"https://ignition-shared-v3.onrender.com/" 
+	// url: "http://localhost:4000/"
+	url:"https://ignition-shared-v3.onrender.com/" 
 });
 
-s.emit("sync", "radha", "hello world")
+r.on("connect", (MES) => {
+	console.log(MES)
+	r.subscribe("test")
+	r.on("sync", (data) => {
+		console.log(data)
+	})
+})
+
+s.on("connect", (MES) => {
+	console.log(MES)
+	// s.subscribe("test")
+	s.emit("sync", "radha", "hello world")
+})
+
+
+
+
 
 // let real = new Ignition("abc123", {
 // 	// url: "XXXXXXXXXXXXXXXXXXXXXXXXX",
