@@ -44,7 +44,6 @@ export class Ignition {
 		this.#socket.emit("JOIN", { key: this.apiKey, group_id: this.groupId }, (data) => { // this would be recived by the server & the server will join this client int that room
 			console.log(chalk.cyanBright(data));
 		});
-		// this.#socket.emit("GROUP", groupId);
 	}
 
 	async unsubscribe(groupId) {
@@ -55,34 +54,34 @@ export class Ignition {
 		});
 	}
 
-	async emit(eventName, groupId, message) {
-		if (this.url == undefined) {
-			errorLog("You must have `URL` of a server to emit a direct message, try using `publish()` method for Shared users.")
-		}
-
+	async emit(eventName, message, group_id=undefined) {
 		if (typeof (message) == "object") {
 			message = JSON.stringify(message)
 		}
 
-		devLog("EMITTING EVENT !!")
-
-		let mes = {
-			group_id: this.apiKey + "_" + groupId,
-			event_name: eventName,
-			message: this.#encryptionKey ? this.ecrypt(message) : message,
-			key: this.apiKey
+		if(group_id == undefined && this.groupId == undefined){
+			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		}
 
-		console.log("MESSAGE TO BE SENT TO THE SREVRE: -> ", mes);
+		devLog("EMITTING EVENT !!")
 
-		this.#socket.emit("MESSAGE", mes)
+		console.log("MESSAGE TO BE SENT TO THE SREVRE: -> ", message);
+
+		this.#socket.emit("MESSAGE", {
+			group_id: group_id ? group_id : this.groupId,
+			event_name: eventName,
+			message: message,
+			key: this.apiKey
+		})
 	}
 
 	async on(eventName, callback) {
 		if (eventName != "connect" && eventName != "disconnect" && this.groupId == undefined) {
 			errorLog("Missing `groupId`. Did you forgot to `subsribe` to a group ?");
 		};
-		this.#socket.on(eventName, callback);
+		this.#socket.on(eventName, (...data) => {
+			callback(...data)
+		})
 	}
 
 	async off(eventName, callback = undefined) {
