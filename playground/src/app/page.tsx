@@ -20,7 +20,7 @@ export default function Home() {
 
 		const con = new Ignition({
 			key:"abc123",
-			url:"https://ignition-shared-v3.onrender.com"
+			url:"https://ignition-shared-v5.onrender.com"
 		})
 
 		setSocket(con);
@@ -60,7 +60,7 @@ export default function Home() {
 				}}
 				placeholder="Live edit a document with ignition .." 
 				className="p-8 text-xl w-[90%] mx-4 sm:m-auto sm:w-11/12 h-96 border border-neutral-800 rounded-2xl 
-				bg-neutral-900 outline-none"
+				bg-neutral-100 outline-none"
 			/>
 		</main>
 	);
